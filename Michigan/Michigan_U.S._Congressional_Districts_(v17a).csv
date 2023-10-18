@@ -1,0 +1,15 @@
+OBJECTID,NAME,LABEL,TYPE,LEGISLATOR,PARTY,URL,SQKM,SQMILES,ACRES,VER,LAYOUT,PENINSULA,ShapeSTAre,ShapeSTLen
+1,13,13,District,Rashida Tlaib,D,https://www.congress.gov/member/rashida-tlaib/T000481,483.944,186.851,119583.959,17A,landscape,lower,886451890.659649,247262.4685516078
+2,02,02,District,Bill Huizenga,R,https://www.congress.gov/member/bill-huizenga/H001058,8849.31,3416.722,2186688.538,17A,portrait,lower,16843024621.942633,790294.758430659
+4,03,03,District,Peter Meijer,R,https://www.congress.gov/member/peter-meijer/M001186,6983.559,2696.355,1725656.426,17A,portrait,lower,12954612619.925097,814889.7602719334
+5,06,06,District,Fred Upton,R,https://www.congress.gov/member/fred-upton/U000031,9448.582,3648.101,2334770.277,17A,landscape,lower,17228942975.98521,633947.7037394652
+6,04,04,District,John Moolenaar,R,https://www.congress.gov/member/john-moolenaar/M001194,22410.424,8652.673,5537676.71,17A,portrait,lower,42977802653.0726,1179944.5126329868
+7,05,05,District,Daniel Kildee,D,https://www.congress.gov/member/daniel-kildee/K000380,6207.508,2396.721,1533892.218,17A,portrait,lower,11882815693.240088,1192752.5502588777
+8,01,01,District,Jack Bergman,R,https://www.congress.gov/member/jack-bergman/B001301,67581.054,26093.071,16699462.4,17A,landscape,upper,139480354128.62225,7255416.68106969
+9,08,08,District,Elissa Slotkin,D,https://www.congress.gov/member/elissa-slotkin/S001208,3989.842,1540.48,985900.885,17A,landscape,lower,7384191527.673029,502147.4795631923
+10,09,09,District,Andy Levin,D,https://www.congress.gov/member/andy-levin/L000592,480.584,185.554,118753.571,17A,landscape,lower,886001117.045338,270749.1664239998
+11,07,07,District,Tim Walberg,R,https://www.congress.gov/member/tim-walberg/W000798,11152.369,4305.934,2755780.688,17A,landscape,lower,20288926249.50221,1015772.8950285412
+12,10,10,District,Lisa McClain,R,https://www.congress.gov/member/lisa-mcclain/M001136,10855.263,4191.221,2682364.995,17A,portrait,lower,20525769686.900158,1453323.2715846081
+13,12,12,District,Debbie Dingell,D,https://www.congress.gov/member/debbie-dingell/D000624,1115.38,430.649,275613.452,17A,landscape,lower,2035817891.3438442,343259.9776629174
+14,14,14,District,Brenda Lawrence,D,https://www.congress.gov/member/brenda-lawrence/L000581,500.601,193.282,123699.918,17A,landscape,lower,921360853.5220774,343138.0889089916
+15,11,11,District,Haley Stevens,D,https://www.congress.gov/member/haley-stevens/S001215,1140.718,440.432,281874.42,17A,portrait,lower,2103309276.4791245,411754.58853955776
