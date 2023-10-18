@@ -7,13 +7,11 @@ import matplotlib.pyplot as plt
 import json
 
 # NEVADA Graph
-# print(utils.NEVADA_PATH + 'NV_SA_Districts.zip')
-# nv_sa = geopandas.read_file(utils.NEVADA_PATH + 'tl_2012_32_vtd10.zip')
-# # nv_sa = geopandas.read_file(utils.NEVADA_PATH + 'nv_voting_precincts.zip')
-# centroids = np.column_stack((nv_sa.centroid.x, nv_sa.centroid.y))
-# queen = weights.Queen.from_dataframe(nv_sa)
-# graph = queen.to_networkx()
-# positions = dict(zip(graph.nodes, centroids))
+nv_sa = geopandas.read_file('./../Nevada/precincts/nv_voting_precincts.zip')
+centroids = np.column_stack((nv_sa.centroid.x, nv_sa.centroid.y))
+queen = weights.Queen.from_dataframe(nv_sa)
+graph = queen.to_networkx()
+positions = dict(zip(graph.nodes, centroids))
 
 # GEORGIA Graph
 # ga_cd = geopandas.read_file(utils.GEORGIA_PATH + 'precincts/ga-precincts2022-shape.zip')
@@ -22,7 +20,7 @@ import json
 # graph = queen.to_networkx()
 # positions = dict(zip(graph.nodes, centroids))
 
-ga_cd = nx.read_shp(utils.GEORGIA_PATH + 'precincts/ga-precincts2022-shape.zip')
+# ga_cd = nx.read_shp(utils.GEORGIA_PATH + 'precincts/ga-precincts2022-shape.zip')
 
 # print(ga_cd)
 
@@ -62,7 +60,7 @@ ga_cd = nx.read_shp(utils.GEORGIA_PATH + 'precincts/ga-precincts2022-shape.zip')
 # graph = queen.to_networkx()
 # positions = dict(zip(graph.nodes, centroids))
 
-# ax = ga_cd.plot(linewidth=1, edgecolor="grey", facecolor="lightblue")
-# ax.axis("off")
-# nx.draw(graph, positions, ax=ax, node_size=5, node_color="r")
-# plt.show()
+ax = nv_sa.plot(linewidth=1, edgecolor="grey", facecolor="lightblue")
+ax.axis("off")
+nx.draw(graph, positions, ax=ax, node_size=5, node_color="r")
+plt.show()
