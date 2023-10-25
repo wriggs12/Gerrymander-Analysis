@@ -5,45 +5,38 @@ import utils
 import matplotlib.pyplot as plt
 import csv
 import numpy as np
+import random
+import maup
 
-def preprocess(precincts, populations):
+
+def preprocess(precincts, populations, districts, election_results):
     precincts['NEIGHBORS'] = None
 
     for index, precinct in precincts.iterrows():
-        neighbors = np.array(precincts[precincts.geometry.touches(precinct['geometry'])].GEOID)
+        neighbors = np.array(precincts[precincts.geometry.touches(precinct['geometry'])].GEOID20)
         precincts.at[index, 'NEIGHBORS'] = ', '.join(neighbors)
 
-    print(precincts.geometry)
-    print(precincts)
+    precincts = precincts.join(populations.set_index('GEOID20'), on='GEOID20')
+    precincts = precincts.join(election_results.set_index('GEOID20'), on='GEOID20')
 
-    precincts = precincts.set_index('GEOID').join(populations.set_index('GEOID'))
+    precinct_to_district_assignment = maup.assign(precincts, districts)
+    precincts['DISTRICT'] = precinct_to_district_assignment
 
-    precincts.plot(column='VAP')
-    plt.show()
+    return precincts
 
 def get_nevada_data():
-    precincts = geopandas.read_file(utils.NEVADA_PATH + 'tl_rd22_32_bg.zip')
-    populations = pd.read_csv(utils.NEVADA_PATH + 'voting_age_population.csv')
+    precincts = geopandas.read_file(utils.NEVADA_PATH + 'Hope/nv_vtd_2020_bound.zip')
+    populations = pd.read_csv(utils.NEVADA_PATH + 'Hope/2020PL94-171_ADJPOP11-13-2021_Precincts.csv')
+    districts = geopandas.read_file(utils.NEVADA_PATH + 'Hope/nv_sldl_2021.zip')
+    election_results = pd.read_csv(utils.NEVADA_PATH + 'Hope/nv_2020_election.csv')
 
-    populations = populations.rename(columns={'GEO_ID': 'GEOID'})
-    populations = populations.drop(populations.index[0])
-    populations = populations.dropna(how='all', axis='columns')
-    populations = populations.drop('NAME', axis='columns')
+    populations = populations.drop(['STATEFP20', 'COUNTYFP20', 'VTDST20', 'NAME20'], axis='columns')
 
-    populations['VAP'] = populations.drop('GEOID', axis='columns').astype(float).sum(axis='columns')
-    populations['GEOID'] = populations['GEOID'].apply(lambda id : id[9:])
-    
-    populations = populations.loc[:, populations.columns.intersection(['GEOID', 'VAP'])]
+    precincts = preprocess(precincts, populations, districts, election_results)
 
-    preprocess(precincts, populations)
+    return precincts
 
 
 
 if __name__ == '__main__':
     get_nevada_data()
-
-# precincts.plot()
-
-# precincts.merge(districts, how='inner')
-
-# print(precincts)
