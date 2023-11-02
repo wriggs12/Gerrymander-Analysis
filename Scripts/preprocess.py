@@ -10,6 +10,9 @@ import maup
 
 
 def preprocess(precincts, populations, districts, election_results):
+    precincts = precincts.to_crs('EPSG:3421')
+    districts = districts.to_crs('EPSG:3421')
+
     precincts['NEIGHBORS'] = None
 
     for index, precinct in precincts.iterrows():
