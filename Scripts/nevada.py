@@ -54,18 +54,3 @@ for partition in chain.with_progress_bar():
 
 generated_partitions[-1].plot()
 plt.show()
-
-# fig, ax = plt.subplots(figsize=(8, 6))
-
-# ax.axhline(0.5, color="#cccccc")
-
-# calc_data.boxplot(ax=ax, positions=range(len(calc_data.columns)))
-# plt.plot(calc_data.iloc[0], "ro")
-
-# ax.set_title("Comparing the 2020 plan to an ensemble")
-# ax.set_ylabel("Democratic vote % (State Assembly 2020)")
-# ax.set_xlabel("Sorted districts")
-# ax.set_ylim(0, 1)
-# ax.set_yticks([0, 0.25, 0.5, 0.75, 1])
-
-# plt.show()
