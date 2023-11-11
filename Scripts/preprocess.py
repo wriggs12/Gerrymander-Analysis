@@ -1,11 +1,8 @@
 import geopandas
 import pandas as pd
-import json
 import utils
 import matplotlib.pyplot as plt
-import csv
 import numpy as np
-import random
 import maup
 
 
@@ -52,9 +49,12 @@ def get_nevada_data():
 
     precincts = preprocess(precincts, populations, districts, election_results)
 
+    precincts = precincts.drop(['STATEFP20', 'STATEFP', 'COUNTYFP20', 'COUNTYFP', 'G20PRELJOR', 'G20PREIBLA', 'G20PREONON', 'GEOID', 'VTDST20', 'VTDI20', 'NAMELSAD20', 'LSAD20', 'MTFCC20', 'FUNCSTAT20', 'ALAND20', 'AWATER20'], axis='columns')
+
     return precincts
 
 
 
 if __name__ == '__main__':
-    get_nevada_data()
+    nevada_data = get_nevada_data()
+    nevada_data.to_file('nevada_data.shp')

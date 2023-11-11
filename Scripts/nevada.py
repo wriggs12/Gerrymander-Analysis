@@ -3,13 +3,11 @@ from gerrychain import (GeographicPartition, Partition, Graph, MarkovChain,
                         proposals, updaters, constraints, accept, Election)
 from gerrychain.proposals import recom
 from functools import partial
-import pandas as pd
-import preprocess as data
-import json
-from networkx.readwrite import json_graph
+import geopandas
 
-
-nv = data.get_nevada_data()
+print('Reading Data...')
+nv = geopandas.read_file('nevada_data_processed.zip')
+print('Done')
 graph = Graph.from_geodataframe(nv)
 
 elections = [
@@ -45,15 +43,30 @@ chain = MarkovChain(
     ],
     accept=accept.always_accept,
     initial_state=initial_partition,
-    total_steps=1000
+    total_steps=100
 )
 
 generated_partitions = []
 for partition in chain.with_progress_bar():
     generated_partitions.append(partition)
 
-generated_partitions[-1].plot()
-plt.show()
+generated_partitions[0].graph.to_json('output.json')
+
+# print(generated_partitions[-1].graph.nodes[0])
+
+    # chain = MarkovChain(
+    #     proposal=proposal,
+    #     constraints=[
+    #         pop_constraint,
+    #         compactness_bound
+    #     ],
+    #     accept=accept.always_accept,
+    #     initial_state=generated_partitions[-1],
+    #     total_steps=1000
+    # )
+
+# generated_partitions[-1].plot()
+# plt.show()
 
 # fig, ax = plt.subplots(figsize=(8, 6))
 
