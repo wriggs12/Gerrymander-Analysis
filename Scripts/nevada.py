@@ -4,6 +4,7 @@ from gerrychain import (GeographicPartition, Partition, Graph, MarkovChain,
 from gerrychain.proposals import recom
 from functools import partial
 import geopandas
+import random
 
 print('Reading Data...')
 nv = geopandas.read_file('nevada_data_processed.zip')
@@ -43,42 +44,31 @@ chain = MarkovChain(
     ],
     accept=accept.always_accept,
     initial_state=initial_partition,
-    total_steps=100
+    total_steps=50
 )
 
-generated_partitions = []
-for partition in chain.with_progress_bar():
-    generated_partitions.append(partition)
+ensembles = []
+for itr in range(10):
+    seed = itr
+    random.seed(seed)
+    generated_partition = initial_partition
+    for partition in chain.with_progress_bar():
+        generated_partition = partition
+    ensembles.append(generated_partition)
 
-generated_partitions[0].graph.to_json('output.json')
 
-# print(generated_partitions[-1].graph.nodes[0])
 
-    # chain = MarkovChain(
-    #     proposal=proposal,
-    #     constraints=[
-    #         pop_constraint,
-    #         compactness_bound
-    #     ],
-    #     accept=accept.always_accept,
-    #     initial_state=generated_partitions[-1],
-    #     total_steps=1000
-    # )
+def generate_ensemble(size, initial_partition):
+    pass
 
-# generated_partitions[-1].plot()
-# plt.show()
+def district_plan(partition):
+    pass
 
-# fig, ax = plt.subplots(figsize=(8, 6))
+def calc_stats(ensemble):
+    pass
 
-# ax.axhline(0.5, color="#cccccc")
+def cluster_analysis(ensemble):
+    pass
 
-# calc_data.boxplot(ax=ax, positions=range(len(calc_data.columns)))
-# plt.plot(calc_data.iloc[0], "ro")
-
-# ax.set_title("Comparing the 2020 plan to an ensemble")
-# ax.set_ylabel("Democratic vote % (State Assembly 2020)")
-# ax.set_xlabel("Sorted districts")
-# ax.set_ylim(0, 1)
-# ax.set_yticks([0, 0.25, 0.5, 0.75, 1])
-
-# plt.show()
+def optimal_transport():
+    pass
