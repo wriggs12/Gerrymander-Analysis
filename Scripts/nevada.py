@@ -4,7 +4,7 @@ from gerrychain import (GeographicPartition, Partition, Graph, MarkovChain,
 from gerrychain.proposals import recom
 from functools import partial
 import geopandas
-import random
+from gerrychain.random import random
 
 print('Reading Data...')
 nv = geopandas.read_file('nevada_data_processed.zip')
@@ -47,28 +47,17 @@ chain = MarkovChain(
     total_steps=50
 )
 
-ensembles = []
+ensemble = []
 for itr in range(10):
     seed = itr
     random.seed(seed)
     generated_partition = initial_partition
     for partition in chain.with_progress_bar():
         generated_partition = partition
-    ensembles.append(generated_partition)
+    ensemble.append(generated_partition)
 
 
-
-def generate_ensemble(size, initial_partition):
-    pass
-
-def district_plan(partition):
-    pass
-
-def calc_stats(ensemble):
-    pass
-
-def cluster_analysis(ensemble):
-    pass
-
-def optimal_transport():
-    pass
+print(ensemble[0].graph.nodes[0])
+# plt.show()
+# for node in ensemble[0].graph.nodes:
+#     print(ensemble[0].assignment[node])
