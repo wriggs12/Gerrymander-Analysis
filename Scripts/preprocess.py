@@ -6,9 +6,10 @@ import numpy as np
 import maup
 
 def preprocess(precincts, populations, districts, election_results):
-    precincts = precincts.to_crs('EPSG:3421')
-    districts = districts.to_crs('EPSG:3421')
+    precincts = precincts.to_crs('EPSG:3857')
+    districts = districts.to_crs('EPSG:3857')
 
+    precincts['NEIGHBORS_TEMP'] = None
     precincts['NEIGHBORS'] = None
 
     print("Generating Precinct Neighbors...")
@@ -17,11 +18,15 @@ def preprocess(precincts, populations, districts, election_results):
         for i, possible_neighbor in precincts.iterrows():
             if i == index:
                 continue
+            
+            if (not precinct['geometry'].intersects(possible_neighbor['geometry'])):
+                continue
 
             border_length = precinct['geometry'].intersection(possible_neighbor['geometry']).length
-            if border_length > 66:
+            if border_length > 61:
                 neighbors.append(possible_neighbor['GEOID20'])
 
+        precincts.at[index, 'NEIGHBORS_TEMP'] = neighbors
         precincts.at[index, 'NEIGHBORS'] = ', '.join(neighbors)
     
     print("Done\n")
@@ -32,7 +37,22 @@ def preprocess(precincts, populations, districts, election_results):
     print("Assigning Districts...")
     precinct_to_district_assignment = maup.assign(precincts, districts)
     precincts['DISTRICT'] = precinct_to_district_assignment
+
+    for index, precinct in precincts.iterrows():
+        district_num = precinct['DISTRICT']
+        is_island = True
+
+        for neighbor in precinct['NEIGHBORS_TEMP']:
+            if (precincts.iloc[precincts.index[precincts['GEOID20'] == neighbor][0]]['DISTRICT'] == district_num):
+                is_island = False
+                break
+        
+        if (is_island):
+            precinct['DISTRICT'] = precincts.iloc[precincts.index[precincts['GEOID20'] == precinct['NEIGHBORS_TEMP'][0]][0]]['DISTRICT']
+
     print("Done\n")
+
+    precincts = precincts.drop(['NEIGHBORS_TEMP'], axis='columns')
 
     return precincts
 
@@ -50,7 +70,7 @@ def get_nevada_data():
     print("Done\n")
 
     print("Reading District Boundry Data...")
-    districts = geopandas.read_file(utils.NEVADA_PATH + 'Hope/nv_sldl_2021.zip')
+    districts = geopandas.read_file(utils.NEVADA_PATH + 'Hope/2021Assembly_Final_SB1_Amd2.zip')
     print("Done\n")
 
     populations = populations.drop(['STATEFP20', 'COUNTYFP20', 'VTDST20', 'NAME20'], axis='columns')
@@ -58,6 +78,7 @@ def get_nevada_data():
     precincts = preprocess(precincts, populations, districts, election_results)
 
     precincts = precincts.drop(['STATEFP20', 'STATEFP', 'COUNTYFP20', 'COUNTYFP', 'G20PRELJOR', 'G20PREIBLA', 'G20PREONON', 'GEOID', 'VTDST20', 'VTDI20', 'NAMELSAD20', 'LSAD20', 'MTFCC20', 'FUNCSTAT20', 'ALAND20', 'AWATER20'], axis='columns')
+    precincts = precincts.drop(['INTPTLAT20', 'INTPTLON20', 'TA2RACE', 'TANHOPICMB', 'TAOTHERALN', 'NAME20'], axis='columns')
 
     return precincts
 
@@ -65,4 +86,4 @@ def get_nevada_data():
 
 if __name__ == '__main__':
     nevada_data = get_nevada_data()
-    nevada_data.to_file('nevada_data.shp')
+    nevada_data.to_file('nevada_data_processed.shp')
