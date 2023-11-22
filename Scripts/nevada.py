@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import networkx as nx
 from gerrychain import (GeographicPartition, Partition, Graph, MarkovChain,
                         proposals, updaters, constraints, accept, Election)
 from gerrychain.proposals import recom
@@ -33,7 +34,7 @@ compactness_bound = constraints.UpperBound(
     2*len(initial_partition["cut_edges"])
 )
 
-pop_constraint = constraints.within_percent_of_ideal_population(initial_partition, 0.08)
+pop_constraint = constraints.within_percent_of_ideal_population(initial_partition, 0.12)
 
 chain = MarkovChain(
     proposal=proposal,
@@ -50,9 +51,16 @@ generated_partitions = []
 for partition in chain.with_progress_bar():
     generated_partitions.append(partition)
 
+# generated_partitions[50].plot()
+# plt.show()
+
+# nx.draw(graph)
+# plt.show()
+generated_partitions[50].graph.to_json('output.json', include_geometries_as_geojson=True)
+
 # generated_partitions[-1].plot()
 # plt.show()
-generated_partitions[0].graph.to_json('output.json')
+# generated_partitions[0].graph.to_json('output.json')
 
 # print(generated_partitions[-1].graph.nodes[0])
 

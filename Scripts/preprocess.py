@@ -5,7 +5,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import maup
 
-
 def preprocess(precincts, populations, districts, election_results):
     precincts = precincts.to_crs('EPSG:3421')
     districts = districts.to_crs('EPSG:3421')
@@ -14,8 +13,17 @@ def preprocess(precincts, populations, districts, election_results):
 
     print("Generating Precinct Neighbors...")
     for index, precinct in precincts.iterrows():
-        neighbors = np.array(precincts[precincts.geometry.touches(precinct['geometry'])].GEOID20)
+        neighbors = []
+        for i, possible_neighbor in precincts.iterrows():
+            if i == index:
+                continue
+
+            border_length = precinct['geometry'].intersection(possible_neighbor['geometry']).length
+            if border_length > 66:
+                neighbors.append(possible_neighbor['GEOID20'])
+
         precincts.at[index, 'NEIGHBORS'] = ', '.join(neighbors)
+    
     print("Done\n")
 
     precincts = precincts.join(populations.set_index('GEOID20'), on='GEOID20')
