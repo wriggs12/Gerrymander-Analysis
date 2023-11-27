@@ -12,13 +12,15 @@ def preprocess(precincts, populations, districts, election_results):
     precincts['NEIGHBORS_TEMP'] = None
     precincts['NEIGHBORS'] = None
 
+    num_islands = 0
+
     print("Generating Precinct Neighbors...")
     for index, precinct in precincts.iterrows():
         neighbors = []
         for i, possible_neighbor in precincts.iterrows():
             if i == index:
                 continue
-            
+
             if (not precinct['geometry'].intersects(possible_neighbor['geometry'])):
                 continue
 
@@ -26,9 +28,13 @@ def preprocess(precincts, populations, districts, election_results):
             if border_length > 61:
                 neighbors.append(possible_neighbor['GEOID20'])
 
+        if (len(neighbors) == 1):
+            num_islands = num_islands + 1
+
         precincts.at[index, 'NEIGHBORS_TEMP'] = neighbors
         precincts.at[index, 'NEIGHBORS'] = ', '.join(neighbors)
-    
+
+    print("Number of Islands: ", num_islands)
     print("Done\n")
 
     precincts = precincts.join(populations.set_index('GEOID20'), on='GEOID20')
@@ -46,7 +52,7 @@ def preprocess(precincts, populations, districts, election_results):
             if (precincts.iloc[precincts.index[precincts['GEOID20'] == neighbor][0]]['DISTRICT'] == district_num):
                 is_island = False
                 break
-        
+
         if (is_island):
             precinct['DISTRICT'] = precincts.iloc[precincts.index[precincts['GEOID20'] == precinct['NEIGHBORS_TEMP'][0]][0]]['DISTRICT']
 

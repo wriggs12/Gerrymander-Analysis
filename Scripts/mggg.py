@@ -55,7 +55,7 @@ def run(data):
         2*len(initial_partition["cut_edges"])
     )
 
-    pop_constraint = constraints.within_percent_of_ideal_population(initial_partition, 0.12)
+    pop_constraint = constraints.within_percent_of_ideal_population(initial_partition, 0.10)
 
     chain = MarkovChain(
         proposal=proposal,
