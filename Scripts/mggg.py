@@ -5,14 +5,8 @@ from functools import partial
 from gerrychain.random import random
 import matplotlib.pyplot as plt
 
-def generate_ensemble(size, initial_partition, chain):
+def generate_ensemble(size, chain):
     ensemble = []
-
-    # data = pandas.DataFrame(
-    #     partition
-    #     for partition in chain.with_progress_bar()
-    # )
-
 
     for i in range(size):
         random.seed(i)
@@ -25,8 +19,6 @@ def generate_ensemble(size, initial_partition, chain):
     return ensemble
 
 def run(data):
-    data.plot()
-    plt.show()
     graph = Graph.from_geodataframe(data)
 
     elections = [
@@ -38,7 +30,6 @@ def run(data):
     my_updaters.update(election_updaters)
 
     initial_partition = GeographicPartition(graph, assignment='DISTRICT', updaters=my_updaters)
-
     initial_partition.plot()
     plt.show()
 
@@ -55,12 +46,12 @@ def run(data):
         2*len(initial_partition["cut_edges"])
     )
 
-    pop_constraint = constraints.within_percent_of_ideal_population(initial_partition, 0.10)
+    pop_constraint = constraints.within_percent_of_ideal_population(initial_partition, 0.15)
 
     chain = MarkovChain(
         proposal=proposal,
         constraints=[
-            pop_constraint,
+            # pop_constraint,
             compactness_bound
         ],
         accept=accept.always_accept,
@@ -68,7 +59,7 @@ def run(data):
         total_steps=10000
     )
 
-    return generate_ensemble(1000, initial_partition, chain)
+    return generate_ensemble(1000, chain)
 
 def district_plan(partition):
     pass
