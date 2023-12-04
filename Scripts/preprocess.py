@@ -3,6 +3,9 @@ import pandas as pd
 import utils
 import maup
 
+def remove_islands(data):
+    pass
+
 def preprocess(precincts, populations, districts, election_results):
     precincts = precincts.join(populations.set_index('GEOID20'), on='GEOID20')
     precincts = precincts.join(election_results.set_index('GEOID20'), on='GEOID20')
@@ -14,21 +17,19 @@ def preprocess(precincts, populations, districts, election_results):
 
     print("Generating Precinct Neighbors...")
     for index, precinct in precincts.iterrows():
-        neighbors = []
-        for i, possible_neighbor in precincts.iterrows():
-            if i == index:
-                continue
+        # neighbors = []
+        # for i, possible_neighbor in precincts.iterrows():
+        #     if i == index:
+        #         continue
 
-            if (not precinct['geometry'].intersects(possible_neighbor['geometry'])):
-                continue
+        #     if (not precinct['geometry'].intersects(possible_neighbor['geometry'])):
+        #         continue
 
-            border_length = precinct['geometry'].intersection(possible_neighbor['geometry']).length
-            if border_length > 100:
-                neighbors.append(possible_neighbor['GEOID20'])
+        #     border_length = precinct['geometry'].intersection(possible_neighbor['geometry']).length
+        #     if border_length > 80:
+        #         neighbors.append(possible_neighbor['GEOID20'])
 
-        if (len(neighbors) == 0):
-            print("Debug: BORDER SIZE TOO SMALL")
-
+        neighbors = precincts[precincts.geometry.touches(precinct.geometry)].GEOID20.tolist()
         precincts.at[index, 'NEIGHBORS'] = ', '.join(neighbors)
 
     print("Assigning Districts...")

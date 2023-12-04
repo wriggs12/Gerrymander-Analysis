@@ -3,24 +3,23 @@ from gerrychain import (GeographicPartition, Graph, MarkovChain,
 from gerrychain.proposals import recom
 from functools import partial
 from gerrychain.random import random
-import matplotlib.pyplot as plt
+from gerrychain.constraints import no_vanishing_districts
+import multiprocessing as mp
 
-def generate_ensemble(size, chain):
-    ensemble = []
+ENSEMBLE_SIZE=1
 
-    for i in range(size):
-        random.seed(i)
+def generate_plan(chain, seed):
+    random.seed(seed)
+    for partition in chain.with_progress_bar():
+        pass
     
-        for partition in chain.with_progress_bar():
-            pass
+    generated_plan = partition
+    calc_party_split(generated_plan)
+    calc_race_demographics(generated_plan)
 
-        ensemble.append(partition)
-    
-    return ensemble
+    return partition
 
-def run(data):
-    graph = Graph.from_geodataframe(data)
-
+def init_chain(graph):
     elections = [
         Election("PRES", {"Dem": "G20PREDBID", "Rep": "G20PRERTRU"})
     ]
@@ -30,45 +29,56 @@ def run(data):
     my_updaters.update(election_updaters)
 
     initial_partition = GeographicPartition(graph, assignment='DISTRICT', updaters=my_updaters)
-    initial_partition.plot()
-    plt.show()
-
     ideal_population = sum(initial_partition["population"].values()) / len(initial_partition)
+
+    pop_constraint = constraints.within_percent_of_ideal_population(initial_partition, 0.10)
 
     proposal = partial(recom,
                     pop_col="ADJPOP",
                     pop_target=ideal_population,
-                    epsilon=0.02,
-                    node_repeats=2)
+                    epsilon=0.10,
+                    node_repeats=1)
 
     compactness_bound = constraints.UpperBound(
         lambda p: len(p["cut_edges"]),
         2*len(initial_partition["cut_edges"])
     )
 
-    pop_constraint = constraints.within_percent_of_ideal_population(initial_partition, 0.15)
-
     chain = MarkovChain(
         proposal=proposal,
         constraints=[
-            # pop_constraint,
+            no_vanishing_districts,
+            pop_constraint,
             compactness_bound
         ],
         accept=accept.always_accept,
         initial_state=initial_partition,
-        total_steps=10000
+        total_steps=100
     )
 
-    return generate_ensemble(1000, chain)
+    return chain
 
-def district_plan(partition):
-    pass
+def run(data):
+    graph = Graph.from_geodataframe(data)
+    chain = init_chain(graph)
 
-def calc_stats(ensemble):
-    pass
+    ensemble = [generate_plan(chain, seed) for seed in range(ENSEMBLE_SIZE)]
+    for plan in ensemble:
+        print(plan.graph.nodes[0])
+    
 
-def cluster_analysis(ensemble):
-    pass
+def calc_party_split(plan):
+    rep = 0
+    dem = 0
+    for node in plan.graph:
+        dem = dem + plan.graph.nodes[node]['G20PREDBID']
+        rep = rep + plan.graph.nodes[node]['G20PRERTRU']
 
-def optimal_transport():
+    if (rep > dem):
+        return 'R'
+    else:
+        return 'D'
+    
+
+def calc_race_demographics(plan):
     pass
