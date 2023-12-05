@@ -4,8 +4,11 @@ from gerrychain.proposals import recom
 from functools import partial
 from gerrychain.random import random
 from gerrychain.constraints import no_vanishing_districts
+from sklearn.manifold import MDS
+import opt_trans as ot
 import json
 import os
+import utils
 
 ENSEMBLE_SIZE=1000
 stats = {}
@@ -13,16 +16,30 @@ stats = {}
 def run(data, dist_measure, ensemble_number, size=1000):
     ENSEMBLE_SIZE = size
 
+    print("Setting Up...")
     graph = Graph.from_geodataframe(data)
     chain = init_chain(graph)
 
+    print("Generating Ensemble...")
     ensemble = [generate_plan(chain, seed) for seed in range(ENSEMBLE_SIZE)]
-    cluster_analysis(ensemble, dist_measure)
 
+    print("Performing Cluster Analysis...")
+    match dist_measure:
+        case utils.OPTIMAL_TRANSPORT:
+            cluster_analysis_opt_trans(ensemble)
+        case utils.HAMMING_DISTANCE:
+            cluster_analysis_hamm_dist(ensemble)
+        case utils.ENTROPY_DISTANCE:
+            cluster_analysis_ent_dist(ensemble)
+        case _:
+            cluster_analysis_hamm_dist(ensemble)
+        
+    print("Saving Plan Data...")
     os.mkdir('./ensemble_' + str(ensemble_number))
     for index, plan in enumerate(ensemble):
         plan.graph.to_json('./ensemble_' + str(ensemble_number) + '/partition_' + str(index))
 
+    print("Saving Ensemble Stats...")
     with open('./ensemble_' + str(ensemble_number) + '.json', 'w') as file:
         json.dump(stats, file)
     
@@ -53,7 +70,7 @@ def init_chain(graph):
     proposal = partial(recom,
                     pop_col="ADJPOP",
                     pop_target=ideal_population,
-                    epsilon=0.10,
+                    epsilon=0.02,
                     node_repeats=1)
 
     compactness_bound = constraints.UpperBound(
@@ -70,7 +87,7 @@ def init_chain(graph):
         ],
         accept=accept.always_accept,
         initial_state=initial_partition,
-        total_steps=100
+        total_steps=10000
     )
 
     return chain
@@ -121,9 +138,33 @@ def calc_stats(plan):
 
     return stats
 
-def cluster_analysis(ensemble, dist_measure):
+def cluster_analysis_opt_trans(ensemble):
     # Find number of clusters and centers
+    distances = []
+
+    for outer_idx, outer_plan in enumerate(ensemble):
+        for inner_idx, inner_plan in range(outer_idx + 1, ENSEMBLE_SIZE):
+            inner_plan = ensemble[inner_idx]
+            distances[outer_idx, inner_idx] = ot.Pair(outer_plan, inner_plan).distance
+            distances[inner_idx, outer_idx] = distances[outer_idx, inner_idx]
+
+    mds = MDS(n_components=2, random_state=0, dissimilarity='precomputed')
+    pos = mds.fit(distances).embedding_
+
+    # use pos to perform clustering
+    
     # calculate variation of clusters
     # calculate number of plans within cluster and avg stats
+    # save stats
 
+def cluster_analysis_hamm_dist(ensemble):
+    pass
+
+def cluster_analysis_ent_dist(ensemble):
+    pass
+
+def compute_clusters(pos):
+    pass
+
+def calc_cluster_stats(cluster):
     pass
