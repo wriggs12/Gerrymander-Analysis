@@ -10,7 +10,7 @@ import json
 import os
 import utils
 
-ENSEMBLE_SIZE=1000
+ENSEMBLE_SIZE=0
 stats = {}
 
 def run(data, dist_measure, ensemble_number, size=1000):
@@ -140,7 +140,7 @@ def calc_stats(plan):
 
 def cluster_analysis_opt_trans(ensemble):
     # Find number of clusters and centers
-    distances = []
+    distances = [[0]*ENSEMBLE_SIZE]*ENSEMBLE_SIZE
 
     for outer_idx, outer_plan in enumerate(ensemble):
         for inner_idx, inner_plan in range(outer_idx + 1, ENSEMBLE_SIZE):
