@@ -4,19 +4,37 @@ from gerrychain.proposals import recom
 from functools import partial
 from gerrychain.random import random
 from gerrychain.constraints import no_vanishing_districts
+import json
+import os
 
-ENSEMBLE_SIZE=1
-stats = {'DEM_DIST': [], 'REP_DIST': [], 'AA_POP': [], 'AI_POP': [], 'WH_POP': [], 'HI_POP': []}
+ENSEMBLE_SIZE=1000
+stats = {}
+
+def run(data, dist_measure, ensemble_number, size=1000):
+    ENSEMBLE_SIZE = size
+
+    graph = Graph.from_geodataframe(data)
+    chain = init_chain(graph)
+
+    ensemble = [generate_plan(chain, seed) for seed in range(ENSEMBLE_SIZE)]
+    cluster_analysis(ensemble, dist_measure)
+
+    os.mkdir('./ensemble_' + str(ensemble_number))
+    for index, plan in enumerate(ensemble):
+        plan.graph.to_json('./ensemble_' + str(ensemble_number) + '/partition_' + str(index))
+
+    with open('./ensemble_' + str(ensemble_number) + '.json', 'w') as file:
+        json.dump(stats, file)
+    
 
 def generate_plan(chain, seed):
     random.seed(seed)
     for partition in chain.with_progress_bar():
         pass
     
-    calc_party_split(partition)
-    calc_race_demographics(partition)
+    stats[seed] = calc_stats(partition)
 
-    return (partition)
+    return partition
 
 def init_chain(graph):
     elections = [
@@ -57,46 +75,55 @@ def init_chain(graph):
 
     return chain
 
-def run(data, dist_measure):
-    graph = Graph.from_geodataframe(data)
-    chain = init_chain(graph)
+def calc_stats(plan):
+    stats = {
+        'wh_dist': [],
+        'aa_dist': [],
+        'ai_dist': [],
+        'hi_dist': [],
+        'rep_dist': [],
+        'dem_dist': []
+    }
 
-    ensemble = [generate_plan(chain, seed) for seed in range(ENSEMBLE_SIZE)]
-    find_clusters(ensemble, dist_measure)
-    
+    for district in plan.assignment.parts.keys():
+        dist = plan.assignment.parts[district]
 
-def calc_party_split(plan, stats):
-    rep = 0
-    dem = 0
-    
-    for node in plan.graph:
-        if plan.graph.nodes[node]['G20PREDBID'] > plan.graph.nodes[node]['G20PRERTRU']:
-            dem = dem + 1
+        wh_pop = 0
+        aa_pop = 0
+        ai_pop = 0
+        hi_pop = 0
+
+        rep_sum = 0
+        dem_sum = 0
+
+        for node in dist:
+            wh_pop = wh_pop + plan.graph.nodes[node]['TAWHITEALN']
+            aa_pop = aa_pop + plan.graph.nodes[node]['TABLACKCMB']
+            ai_pop = ai_pop + plan.graph.nodes[node]['TAASIANCMB']
+            hi_pop = hi_pop + plan.graph.nodes[node]['TAHISPANIC']
+
+            rep_sum = rep_sum + plan.graph.nodes[node]['G20PRERTRU']
+            dem_sum = dem_sum + plan.graph.nodes[node]['G20PREDBID']
+
+        if (max(wh_pop, aa_pop, ai_pop, hi_pop) == wh_pop):
+            stats['wh_dist'].append(district)
+        elif (max(aa_pop, ai_pop, hi_pop) == aa_pop):
+            stats['aa_dist'].append(district)
+        elif (max(ai_pop, hi_pop) == ai_pop):
+            stats['ai_dist'].append(district)
         else:
-            rep = rep + 1
+            stats['hi_dist'].append(district)
 
-    stats['DEM_DIST'].append(dem)
-    stats['REP_DIST'].append(rep)
+        if rep_sum > dem_sum:
+            stats['rep_dist'].append(district)
+        else:
+            stats['dem_dist'].append(district)
 
-def calc_race_demographics(plan, stats):
-    hi_pop = 0
-    aa_pop = 0
-    ai_pop = 0
-    wh_pop = 0
+    return stats
 
-    for node in plan.graph:
-        hi_pop = hi_pop + plan.graph.nodes[node]['TAHISPANIC']
-        aa_pop = aa_pop + plan.graph.nodes[node]['TABLACKCMB']
-        ai_pop = ai_pop + plan.graph.nodes[node]['TAASIANCMB']
-        wh_pop = wh_pop + plan.graph.nodes[node]['TAWHITEALN']
+def cluster_analysis(ensemble, dist_measure):
+    # Find number of clusters and centers
+    # calculate variation of clusters
+    # calculate number of plans within cluster and avg stats
 
-    stats['HI_POP'].append(hi_pop)
-    stats['AA_POP'].append(aa_pop)
-    stats['AI_POP'].append(ai_pop)
-    stats['WH_POP'].append(wh_pop)
-
-def save_stats():
-    pass
-
-def find_clusters(ensemble, dist_measure):
     pass
