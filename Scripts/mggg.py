@@ -43,7 +43,6 @@ def run(data, dist_measure, ensemble_number, size=1000):
     with open('./ensemble_' + str(ensemble_number) + '.json', 'w') as file:
         json.dump(stats, file)
     
-
 def generate_plan(chain, seed):
     random.seed(seed)
     for partition in chain.with_progress_bar():
@@ -70,7 +69,7 @@ def init_chain(graph):
     proposal = partial(recom,
                     pop_col="ADJPOP",
                     pop_target=ideal_population,
-                    epsilon=0.02,
+                    epsilon=0.10,
                     node_repeats=1)
 
     compactness_bound = constraints.UpperBound(
