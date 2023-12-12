@@ -5,12 +5,15 @@ from functools import partial
 from gerrychain.random import random
 from gerrychain.constraints import no_vanishing_districts
 from sklearn.manifold import MDS
+from sklearn.cluster import KMeans
+from sklearn.metrics import silhouette_score
+from scipy.spatial import distance
 import opt_trans as ot
 import json
 import os
 import utils
 
-ENSEMBLE_SIZE=0
+ENSEMBLE_SIZE=10
 stats = {}
 
 def run(data, dist_measure, ensemble_number, size=1000):
@@ -147,14 +150,7 @@ def cluster_analysis_opt_trans(ensemble):
             distances[outer_idx, inner_idx] = ot.Pair(outer_plan, inner_plan).distance
             distances[inner_idx, outer_idx] = distances[outer_idx, inner_idx]
 
-    mds = MDS(n_components=2, random_state=0, dissimilarity='precomputed')
-    pos = mds.fit(distances).embedding_
-
-    # use pos to perform clustering
-    
-    # calculate variation of clusters
-    # calculate number of plans within cluster and avg stats
-    # save stats
+    cluster_partition_mapping, centroids_mapping, average_plans, avg_distances, avg_ensemble_dist = compute_clusters(distances, ensemble)
 
 def cluster_analysis_hamm_dist(ensemble):
     pass
@@ -162,8 +158,76 @@ def cluster_analysis_hamm_dist(ensemble):
 def cluster_analysis_ent_dist(ensemble):
     pass
 
-def compute_clusters(pos):
-    pass
+def compute_clusters(dist_matrix, partitions):
+    mds = MDS(n_components=2, random_state=0, dissimilarity='precomputed')
+    pos = mds.fit(dist_matrix).embedding_
 
-def calc_cluster_stats(cluster):
-    pass
+    total_distance_all_points = 0
+    num_points = len(pos)
+    count_all_pairs = num_points * (num_points - 1) / 2
+
+    for i in range(num_points):
+        for j in range(i + 1, num_points):
+            total_distance_all_points += distance.euclidean(pos[i], pos[j])
+
+    avg_ensemble_dist = total_distance_all_points / count_all_pairs
+
+    sse = []
+    silhouette_scores = []
+    for k in range(2, 10):
+        kmeans = KMeans(n_clusters=k, random_state=42)
+        kmeans.fit(pos)
+        sse.append(kmeans.inertia_)
+
+        score = silhouette_score(pos, kmeans.labels_)
+        silhouette_scores.append(score)
+
+    optimal_k = range(2, 10)[silhouette_scores.index(max(silhouette_scores))]
+
+    kmeans = KMeans(n_clusters=optimal_k, random_state=42)
+    clusters = kmeans.fit_predict(pos)
+    centers = kmeans.cluster_centers_
+
+    cluster_partition_mapping = {i: [] for i in range(len(centers))}
+    for idx, (partition, cluster_id) in enumerate(zip(partitions, clusters)):
+        cluster_partition_mapping[cluster_id].append(partition)
+        mds_coords = pos[idx]
+        partition.plan.mds_centroid = [mds_coords[0], mds_coords[1]]
+
+    centroids_mapping = {i: centroid for i, centroid in enumerate(centers)}
+
+    average_plans = {}
+    for cluster_id, centroid in enumerate(centers):
+        min_dist = float('inf')
+        closest_partition = None
+
+        for partition in cluster_partition_mapping[cluster_id]:
+            partition_index = partitions.index(partition)
+            partition_pos = pos[partition_index]
+
+            dist = distance.euclidean(partition_pos, centroid)
+
+            if dist < min_dist:
+                min_dist = dist
+                closest_partition = partition
+
+        average_plans[cluster_id] = closest_partition
+
+    avg_distances = {}
+    for cluster_id in range(len(centers)):
+        cluster_points = [partition.plan.mds_centroid for partition in partitions if
+                            clusters[partitions.index(partition)] == cluster_id]
+        total_distance = 0
+        count = 0
+
+        for i in range(len(cluster_points)):
+            for j in range(i + 1, len(cluster_points)):
+                total_distance += distance.euclidean(cluster_points[i], cluster_points[j])
+                count += 1
+
+        if count > 0:
+            avg_distances[cluster_id] = total_distance / count
+        else:
+            avg_distances[cluster_id] = 0
+
+    return cluster_partition_mapping, centroids_mapping, average_plans, avg_distances, avg_ensemble_dist
