@@ -13,7 +13,7 @@ import json
 import os
 import utils
 
-ENSEMBLE_SIZE=10
+ENSEMBLE_SIZE=1000
 ENSEMBLE_ID=0
 
 class Plan():
@@ -41,9 +41,11 @@ class Plan():
             'area_data': self.area_data
         }
 
-def run(data, dist_measure, ensemble_number, size=10):
+def run(data, dist_measure, ensemble_id, size=1000):
+    global ENSEMBLE_SIZE
+    global ENSEMBLE_ID
     ENSEMBLE_SIZE = size
-    ENSEMBLE_ID = ensemble_number
+    ENSEMBLE_ID = ensemble_id
 
     print("Setting Up...")
     graph = Graph.from_geodataframe(data)
@@ -202,6 +204,8 @@ def cluster_analysis_opt_trans(ensemble):
             distances[outer_idx][inner_idx] = ot.Pair(outer_plan, inner_plan).distance
             distances[inner_idx][outer_idx] = distances[outer_idx][inner_idx]
 
+    print(distances)
+
     cluster_partition_mapping, centroids_mapping, average_plans, avg_distances, avg_ensemble_dist = compute_clusters(distances, ensemble)
     save_cluster_data(cluster_partition_mapping, centroids_mapping, average_plans, avg_distances, avg_ensemble_dist)
 
@@ -223,7 +227,7 @@ def cluster_analysis_hamm_dist(ensemble):
             distances[inner_idx][outer_idx] = hamm_dist
             distances[outer_idx][inner_idx] = hamm_dist
 
-    print(distance)
+    print(distances)
 
     cluster_partition_mapping, centroids_mapping, average_plans, avg_distances, avg_ensemble_dist = compute_clusters(distances, ensemble)
     save_cluster_data(cluster_partition_mapping, centroids_mapping, average_plans, avg_distances, avg_ensemble_dist)
