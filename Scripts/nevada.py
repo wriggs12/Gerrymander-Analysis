@@ -9,4 +9,4 @@ comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 
 nv = geopandas.read_file('nevada_data_processed.zip')
-mggg.run(nv, utils.OPTIMAL_TRANSPORT, rank)
+mggg.run(nv, utils.HAMMING_DISTANCE, rank)
