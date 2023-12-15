@@ -12,40 +12,27 @@ import opt_trans as ot
 import json
 import os
 import utils
+from datatypes import Plan
+from datatypes import Cluster
+from datatypes import Ensemble
 
-ENSEMBLE_SIZE=1000
-ENSEMBLE_ID=0
+ENSEMBLE_SIZE = 1000
+ENSEMBLE_ID = 0
+OUTPUT_PATH = ''
 
-class Plan():
-    def __init__(self, id, dem_pct, rep_pct, rep_dists, dem_dists, opp_dists, pop_data, area_data):
-        self.id = id
-        self.centroid = 0
-        self.dem_pct = dem_pct
-        self.rep_pct = rep_pct
-        self.rep_dists = rep_dists
-        self.dem_dists = dem_dists
-        self.opportunity_districts = opp_dists
-        self.population_data = pop_data
-        self.area_data = area_data
+PLANS = []
+CLUSTERS = []
+ENSEMBLE = Ensemble()
 
-    def format(self):
-        return {
-            'id': self.id,
-            'mds_centroid': self.centroid,
-            'dem_pct': self.dem_pct,
-            'rep_pct': self.rep_pct,
-            'rep_dists': self.rep_dists,
-            'dem_dists': self.dem_dists,
-            'opportunity_districts': self.opportunity_districts,
-            'population_data': self.population_data,
-            'area_data': self.area_data
-        }
-
-def run(data, dist_measure, ensemble_id, size=1000):
+def run(data, dist_measure, ensemble_number, size=1000):
+    global OUTPUT_PATH
     global ENSEMBLE_SIZE
     global ENSEMBLE_ID
+    global ENSEMBLE
     ENSEMBLE_SIZE = size
-    ENSEMBLE_ID = ensemble_id
+    ENSEMBLE_ID = f'ensemble_{ensemble_number}'
+    ENSEMBLE.ensemble_id = ENSEMBLE_ID
+    OUTPUT_PATH = f'{utils.OUTPUT_PATH}{ENSEMBLE_ID}'
 
     print("Setting Up...")
     graph = Graph.from_geodataframe(data)
@@ -64,18 +51,12 @@ def run(data, dist_measure, ensemble_id, size=1000):
             cluster_analysis_ent_dist(ensemble)
         case _:
             cluster_analysis_hamm_dist(ensemble)
-        
-    # print("Saving Plan Data...")
-    # os.mkdir('./ensemble_' + str(ensemble_number))
-    # for index, plan in enumerate(ensemble):
-    #     print(type(plan.graph))
-    #     plan.graph.to_json('./ensemble_' + str(ensemble_number) + '/partition_' + str(index), include_geometries_as_geojson=True)
 
-    # print("Saving Cluster Data...")
-
-    # print("Saving Ensemble Stats...")
-    # with open('./ensemble_' + str(ensemble_number) + '.json', 'w') as file:
-    #     json.dump(stats, file)
+    ENSEMBLE.num_of_clusters = len(CLUSTERS)
+    ENSEMBLE.num_of_plans = len(PLANS)
+    
+    print("Saving Data...")
+    save_data(ensemble)
     
 def init_chain(graph):
     elections = [
@@ -121,10 +102,12 @@ def generate_plan(chain, seed):
     for partition in chain.with_progress_bar():
         pass
     
-    partition.stats = calc_stats(partition, seed)
+    global PLANS
+    PLANS.append(calc_plan_stats(partition, f'{ENSEMBLE_ID}.plan_{seed}'))
+
     return partition
 
-def calc_stats(plan, seed):
+def calc_plan_stats(plan, plan_id):
     dem_pct = 0
     rep_pct = 0
     rep_dists = []
@@ -190,7 +173,16 @@ def calc_stats(plan, seed):
     population_data['asian_pct'] = avg_asian_pct
     population_data['hisp_pct'] = avg_hisp_pct
 
-    plan_data = Plan(seed, dem_pct, rep_pct, rep_dists, dem_dists, opportunity_districts, population_data, area_data)
+    plan_data = Plan()
+
+    plan_data.plan_id = plan_id
+    plan_data.dem_pct = dem_pct
+    plan_data.rep_pct = rep_pct
+    plan_data.dem_dists = dem_dists
+    plan_data.rep_dists = rep_dists
+    plan_data.opportunity_districts = opportunity_districts
+    plan_data.population_data = population_data
+    plan_data.area_data = area_data
 
     return plan_data
 
@@ -204,10 +196,7 @@ def cluster_analysis_opt_trans(ensemble):
             distances[outer_idx][inner_idx] = ot.Pair(outer_plan, inner_plan).distance
             distances[inner_idx][outer_idx] = distances[outer_idx][inner_idx]
 
-    print(distances)
-
-    cluster_partition_mapping, centroids_mapping, average_plans, avg_distances, avg_ensemble_dist = compute_clusters(distances, ensemble)
-    save_cluster_data(cluster_partition_mapping, centroids_mapping, average_plans, avg_distances, avg_ensemble_dist)
+    compute_clusters(distances, ensemble)
 
 def cluster_analysis_hamm_dist(ensemble):
     print('Calculating Distances...')
@@ -227,15 +216,17 @@ def cluster_analysis_hamm_dist(ensemble):
             distances[inner_idx][outer_idx] = hamm_dist
             distances[outer_idx][inner_idx] = hamm_dist
 
-    print(distances)
-
-    cluster_partition_mapping, centroids_mapping, average_plans, avg_distances, avg_ensemble_dist = compute_clusters(distances, ensemble)
-    save_cluster_data(cluster_partition_mapping, centroids_mapping, average_plans, avg_distances, avg_ensemble_dist)
+    compute_clusters(distances, ensemble)
 
 def cluster_analysis_ent_dist(ensemble):
     pass
 
 def compute_clusters(dist_matrix, partitions):
+    global PLANS
+    global ENSEMBLE
+    global CLUSTERS
+    global ENSEMBLE_ID
+
     print('Computing Clusters...')
     mds = MDS(n_components=2, random_state=0, dissimilarity='precomputed', normalized_stress='auto')
     pos = mds.fit(dist_matrix).embedding_
@@ -249,6 +240,7 @@ def compute_clusters(dist_matrix, partitions):
             total_distance_all_points += distance.euclidean(pos[i], pos[j])
 
     avg_ensemble_dist = total_distance_all_points / count_all_pairs
+    ENSEMBLE.avg_distance = avg_ensemble_dist
 
     sse = []
     silhouette_scores = []
@@ -266,35 +258,47 @@ def compute_clusters(dist_matrix, partitions):
     clusters = kmeans.fit_predict(pos)
     centers = kmeans.cluster_centers_
 
-    cluster_partition_mapping = {i: [] for i in range(len(centers))}
+    cluster_partition_mapping = {i: Cluster() for i in range(len(centers))}
     for idx, (partition, cluster_id) in enumerate(zip(partitions, clusters)):
-        cluster_partition_mapping[cluster_id].append(partition)
-        mds_coords = pos[idx]
-        partition.stats.centroid = [mds_coords[0], mds_coords[1]]
+        cur_plan = PLANS[idx]
+        cluster_partition_mapping[cluster_id].plan_ids.append(cur_plan.plan_id)
 
-    centroids_mapping = {i: centroid for i, centroid in enumerate(centers)}
+        mds_coord = pos[idx]
+        cur_plan.mds_coord = list([mds_coord[0], mds_coord[1]])
 
-    average_plans = {}
+    for idx, mds_coord in enumerate(centers):
+        cluster_partition_mapping[idx].mds_coord = list(mds_coord)
+        cluster_partition_mapping[idx].cluster_id = f'{ENSEMBLE_ID}.cluster_{idx}'
+        cluster_partition_mapping[idx].num_of_plans = len(cluster_partition_mapping[idx].plan_ids)
+        ENSEMBLE.cluster_ids.append(cluster_partition_mapping[idx].cluster_id)
+
     for cluster_id, centroid in enumerate(centers):
         min_dist = float('inf')
         closest_partition = None
 
-        for partition in cluster_partition_mapping[cluster_id]:
-            partition_index = partitions.index(partition)
-            partition_pos = pos[partition_index]
-
+        for plan_id in cluster_partition_mapping[cluster_id].plan_ids:
+            partition_pos = 0
+            for plan in PLANS:
+                if plan.plan_id == plan_id:
+                    partition_pos = plan.mds_coord
+                    break
+        
             dist = distance.euclidean(partition_pos, centroid)
 
             if dist < min_dist:
                 min_dist = dist
-                closest_partition = partition
+                closest_partition = plan_id
 
-        average_plans[cluster_id] = closest_partition
+        cluster_partition_mapping[cluster_id].avg_plan = closest_partition
 
-    avg_distances = {}
     for cluster_id in range(len(centers)):
-        cluster_points = [partition.stats.centroid for partition in partitions if
-                            clusters[partitions.index(partition)] == cluster_id]
+        cluster_points = []
+        for plan_id in cluster_partition_mapping[cluster_id].plan_ids:
+            for plan in PLANS:
+                if plan_id == plan.plan_id:
+                    cluster_points.append(plan.mds_coord)
+                    break
+
         total_distance = 0
         count = 0
 
@@ -304,30 +308,61 @@ def compute_clusters(dist_matrix, partitions):
                 count += 1
 
         if count > 0:
-            avg_distances[cluster_id] = total_distance / count
+            cluster_partition_mapping[cluster_id].variation = total_distance / count
         else:
-            avg_distances[cluster_id] = 0
+            cluster_partition_mapping[cluster_id].variation = 0
 
-    return cluster_partition_mapping, centroids_mapping, average_plans, avg_distances, avg_ensemble_dist
+    for idx in cluster_partition_mapping:
+        CLUSTERS.append(cluster_partition_mapping[idx])
 
-def save_cluster_data(cluster_partition_mapping, centroids_mapping, average_plans, avg_distances, avg_ensemble_dist):
-    for cluster in cluster_partition_mapping:
-        for i in range(len(cluster_partition_mapping[cluster])):
-            cluster_partition_mapping[cluster][i] = cluster_partition_mapping[cluster][i].stats.id
+def save_data(ensemble):
+    global PLANS
+    global OUTPUT_PATH    
+    
+    os.mkdir(f'{OUTPUT_PATH}')
 
-    for plan in average_plans:
-        average_plans[plan] = average_plans[plan].stats.id
+    save_plan_data()
+    save_cluster_data()
+    save_ensemble_data()
 
-    for centroid in centroids_mapping:
-        centroids_mapping[centroid] = centroids_mapping[centroid].tolist()
+    for plan in PLANS:
+        if plan.geo_id == 'N/A':
+            continue
 
-    ensemble_stats = {
-        'cluster_mapping': cluster_partition_mapping,
-        'centroid_mapping': centroids_mapping,
-        'avg_plans': average_plans,
-        'avg_distances': avg_distances,
-        'avg_enesmble_distance': avg_ensemble_dist
-    }
+        save_plan_geo_data(ensemble[plan.geo_id])
 
-    with open('./ensemble_' + str(ENSEMBLE_ID) + '.json', 'w') as file:
-        json.dump(ensemble_stats, file)
+def save_plan_data():
+    global PLANS
+    global OUTPUT_PATH
+
+    with open(f'{OUTPUT_PATH}/plans.json', 'w') as file:
+        plan_data = {}
+        for plan in PLANS:
+            plan_data[plan.plan_id] = plan.format()
+
+        json.dump(plan_data, file)
+
+def save_cluster_data():
+    global CLUSTERS
+    global OUTPUT_PATH
+    
+    with open(f'{OUTPUT_PATH}/clusters.json', 'w') as file:
+        cluster_data = {}
+        for cluster in CLUSTERS:
+            cluster_data[cluster.cluster_id] = cluster.format()
+
+        json.dump(cluster_data, file)
+
+def save_ensemble_data():
+    global ENSEMBLE
+    global OUTPUT_PATH
+
+    with open(f'{OUTPUT_PATH}/ensemble.json', 'w') as file:
+        ensemble_data = {
+            f'{ENSEMBLE_ID}': ENSEMBLE.format()
+        }
+
+        json.dump(ensemble_data, file)
+
+def save_plan_geo_data(plan):
+    pass
