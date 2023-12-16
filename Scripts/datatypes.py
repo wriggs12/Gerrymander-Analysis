@@ -7,6 +7,7 @@ class Plan():
         self.rep_pct = 0.0
         self.rep_dists = []
         self.dem_dists = []
+        self.opp_pct = 0.0
         self.opportunity_districts = []
         self.population_data = {}
         self.area_data = {}
@@ -20,6 +21,7 @@ class Plan():
             'rep_pct': self.rep_pct,
             'rep_dists': self.rep_dists,
             'dem_dists': self.dem_dists,
+            'opp_pct': self.opp_pct,
             'opportunity_districts': self.opportunity_districts,
             'population_data': self.population_data,
             'area_data': self.area_data
@@ -48,6 +50,9 @@ class Ensemble():
     def __init__(self):
         self.ensemble_id = ''
         self.avg_distance = 0.0
+        self.max_opp_pct = 0.0
+        self.max_rep_pct = 0.0
+        self.max_dem_pct = 0.0
         self.num_of_clusters = 0
         self.num_of_plans = 0
         self.cluster_ids = []
@@ -58,5 +63,8 @@ class Ensemble():
             'num_of_clusters': self.num_of_clusters,
             'num_of_plans': self.num_of_plans,
             'avg_distance': self.avg_distance,
+            'max_opp_pct': self.max_opp_pct,
+            'max_dem_pct': self.max_dem_pct,
+            'max_rep_pct': self.max_rep_pct,
             'cluster_ids': self.cluster_ids
         }

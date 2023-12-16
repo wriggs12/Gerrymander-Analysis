@@ -8,13 +8,13 @@ from sklearn.manifold import MDS
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
 from scipy.spatial import distance
+from datatypes import Plan
+from datatypes import Cluster
+from datatypes import Ensemble
 import opt_trans as ot
 import json
 import os
 import utils
-from datatypes import Plan
-from datatypes import Cluster
-from datatypes import Ensemble
 
 ENSEMBLE_SIZE = 1000
 ENSEMBLE_ID = 0
@@ -29,6 +29,7 @@ def run(data, dist_measure, ensemble_number, size=1000):
     global ENSEMBLE_SIZE
     global ENSEMBLE_ID
     global ENSEMBLE
+
     ENSEMBLE_SIZE = size
     ENSEMBLE_ID = f'ensemble_{ensemble_number}'
     ENSEMBLE.ensemble_id = ENSEMBLE_ID
@@ -92,7 +93,7 @@ def init_chain(graph):
         ],
         accept=accept.always_accept,
         initial_state=initial_partition,
-        total_steps=100
+        total_steps=1000
     )
 
     return chain
@@ -152,7 +153,7 @@ def calc_plan_stats(plan, plan_id):
         asian_pcts.append(asian_sum / pop_sum)
         hisp_pcts.append(hisp_sum / pop_sum)
 
-        if (black_pcts[-1] > 0.2 or asian_pcts[-1] > 0.2 or hisp_pcts[-1] > 0.2):
+        if (black_pcts[-1] > 0.35 or asian_pcts[-1] > 0.35 or hisp_pcts[-1] > 0.35):
             opportunity_districts.append(district)
 
         if rep_sum > dem_sum:
@@ -162,6 +163,7 @@ def calc_plan_stats(plan, plan_id):
 
     dem_pct = len(dem_dists) / (len(dem_dists) + len(rep_dists))
     rep_pct = len(rep_dists) / (len(dem_dists) + len(rep_dists))
+    opp_pct = len(opportunity_districts) / (len(dem_dists) + len(rep_dists))
 
     avg_white_pct = sum(white_pcts) / len(white_pcts)
     avg_black_pct = sum(black_pcts) / len(black_pcts)
@@ -180,6 +182,7 @@ def calc_plan_stats(plan, plan_id):
     plan_data.rep_pct = rep_pct
     plan_data.dem_dists = dem_dists
     plan_data.rep_dists = rep_dists
+    plan_data.opp_pct = opp_pct
     plan_data.opportunity_districts = opportunity_districts
     plan_data.population_data = population_data
     plan_data.area_data = area_data
@@ -317,6 +320,34 @@ def compute_clusters(dist_matrix, partitions):
         else:
             cluster_partition_mapping[cluster_id].variation = 0
 
+    max_opp_pct = 0
+    max_dem_pct = 0
+    max_rep_pct = 0
+
+    max_opp_idx = 0
+    max_dem_idx = 0
+    max_rep_idx = 0
+    for idx, plan in enumerate(PLANS):
+        if plan.opp_pct > max_opp_pct:
+            max_opp_pct = plan.opp_pct
+            max_opp_idx = idx
+        
+        if plan.dem_pct > max_dem_pct:
+            max_dem_pct = plan.dem_pct
+            max_dem_idx = idx
+
+        if plan.rep_pct > max_rep_pct:
+            max_rep_pct = plan.rep_pct
+            max_rep_idx = idx
+
+    PLANS[max_opp_idx].geo_id = f'{PLANS[max_opp_idx].plan_id}_GEO'
+    PLANS[max_dem_idx].geo_id = f'{PLANS[max_dem_idx].plan_id}_GEO'
+    PLANS[max_rep_idx].geo_id = f'{PLANS[max_rep_idx].plan_id}_GEO'
+
+    ENSEMBLE.max_opp_pct = max_opp_pct
+    ENSEMBLE.max_rep_pct = max_rep_pct
+    ENSEMBLE.max_dem_pct = max_dem_pct
+
     for idx in cluster_partition_mapping:
         CLUSTERS.append(cluster_partition_mapping[idx])
 
@@ -373,6 +404,8 @@ def save_plan_geo_data(ensemble, data):
         if plan.geo_id == 'N/A':
             continue
         
+        print("Saving Geo Data...")
+
         data_copy = data.copy()
         data_copy['district'] = data_copy.index.map(ensemble[idx].assignment)
         districts = data_copy.dissolve(by='district')
