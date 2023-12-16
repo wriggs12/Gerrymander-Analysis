@@ -91,7 +91,7 @@ def init_chain(graph):
         ],
         accept=accept.always_accept,
         initial_state=initial_partition,
-        total_steps=10000
+        total_steps=100
     )
 
     return chain
