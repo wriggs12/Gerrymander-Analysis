@@ -56,7 +56,7 @@ def run(data, dist_measure, ensemble_number, size=1000):
     ENSEMBLE.num_of_plans = len(PLANS)
     
     print("Saving Data...")
-    save_data(ensemble)
+    save_data(ensemble, data)
     
 def init_chain(graph):
     elections = [
@@ -291,6 +291,11 @@ def compute_clusters(dist_matrix, partitions):
 
         cluster_partition_mapping[cluster_id].avg_plan = closest_partition
 
+        for plan in PLANS:
+            if plan.plan_id == closest_partition:
+                plan.geo_id = f'{plan.plan_id}_GEO'
+                break
+
     for cluster_id in range(len(centers)):
         cluster_points = []
         for plan_id in cluster_partition_mapping[cluster_id].plan_ids:
@@ -315,7 +320,7 @@ def compute_clusters(dist_matrix, partitions):
     for idx in cluster_partition_mapping:
         CLUSTERS.append(cluster_partition_mapping[idx])
 
-def save_data(ensemble):
+def save_data(ensemble, data):
     global PLANS
     global OUTPUT_PATH    
     
@@ -324,12 +329,7 @@ def save_data(ensemble):
     save_plan_data()
     save_cluster_data()
     save_ensemble_data()
-
-    for plan in PLANS:
-        if plan.geo_id == 'N/A':
-            continue
-
-        save_plan_geo_data(ensemble[plan.geo_id])
+    save_plan_geo_data(ensemble, data)
 
 def save_plan_data():
     global PLANS
@@ -364,5 +364,26 @@ def save_ensemble_data():
 
         json.dump(ensemble_data, file)
 
-def save_plan_geo_data(plan):
-    pass
+def save_plan_geo_data(ensemble, data):
+    plans_geo_data = {
+        'geo_data': []
+    }
+
+    for idx, plan in enumerate(PLANS):
+        if plan.geo_id == 'N/A':
+            continue
+        
+        data_copy = data.copy()
+        data_copy['district'] = data_copy.index.map(ensemble[idx].assignment)
+        districts = data_copy.dissolve(by='district')
+
+        geojson_str = districts.to_json()
+        geojson_dict = json.loads(geojson_str)
+        geojson_dict = {
+            f'{plan.geo_id}': geojson_dict
+        }
+
+        plans_geo_data['geo_data'].append(geojson_dict)
+
+    with open(f'{OUTPUT_PATH}/plan_geo.json', 'w') as file:
+        json.dump(plans_geo_data, file)
