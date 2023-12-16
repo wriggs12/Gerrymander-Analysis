@@ -40,7 +40,7 @@ def run(data, dist_measure, ensemble_number, size=1000):
     chain = init_chain(graph)
 
     print("Generating Ensemble...")
-    ensemble = [generate_plan(chain, seed) for seed in range(ENSEMBLE_SIZE)]
+    ensemble = [generate_plan(chain, (seed * (ensemble_number + 1))) for seed in range(ENSEMBLE_SIZE)]
 
     print("Performing Cluster Analysis...")
     match dist_measure:
@@ -48,8 +48,6 @@ def run(data, dist_measure, ensemble_number, size=1000):
             cluster_analysis_opt_trans(ensemble)
         case utils.HAMMING_DISTANCE:
             cluster_analysis_hamm_dist(ensemble)
-        case utils.ENTROPY_DISTANCE:
-            cluster_analysis_ent_dist(ensemble)
         case _:
             cluster_analysis_hamm_dist(ensemble)
 
@@ -93,7 +91,7 @@ def init_chain(graph):
         ],
         accept=accept.always_accept,
         initial_state=initial_partition,
-        total_steps=1000
+        total_steps=10000
     )
 
     return chain
@@ -221,9 +219,6 @@ def cluster_analysis_hamm_dist(ensemble):
 
     compute_clusters(distances, ensemble)
 
-def cluster_analysis_ent_dist(ensemble):
-    pass
-
 def compute_clusters(dist_matrix, partitions):
     global PLANS
     global ENSEMBLE
@@ -321,16 +316,22 @@ def compute_clusters(dist_matrix, partitions):
             cluster_partition_mapping[cluster_id].variation = 0
 
     max_opp_pct = 0
+    min_opp_pct = PLANS[0].opp_pct
     max_dem_pct = 0
     max_rep_pct = 0
 
     max_opp_idx = 0
+    min_opp_idx = 0
     max_dem_idx = 0
     max_rep_idx = 0
     for idx, plan in enumerate(PLANS):
         if plan.opp_pct > max_opp_pct:
             max_opp_pct = plan.opp_pct
             max_opp_idx = idx
+
+        if plan.opp_pct < min_opp_pct:
+            min_opp_pct = plan.opp_pct
+            min_opp_idx = idx
         
         if plan.dem_pct > max_dem_pct:
             max_dem_pct = plan.dem_pct
@@ -341,10 +342,12 @@ def compute_clusters(dist_matrix, partitions):
             max_rep_idx = idx
 
     PLANS[max_opp_idx].geo_id = f'{PLANS[max_opp_idx].plan_id}_GEO'
+    PLANS[min_opp_idx].geo_id = f'{PLANS[min_opp_idx].plan_id}_GEO'
     PLANS[max_dem_idx].geo_id = f'{PLANS[max_dem_idx].plan_id}_GEO'
     PLANS[max_rep_idx].geo_id = f'{PLANS[max_rep_idx].plan_id}_GEO'
 
     ENSEMBLE.max_opp_pct = max_opp_pct
+    ENSEMBLE.min_opp_pct = min_opp_pct
     ENSEMBLE.max_rep_pct = max_rep_pct
     ENSEMBLE.max_dem_pct = max_dem_pct
 

@@ -51,6 +51,7 @@ class Ensemble():
         self.ensemble_id = ''
         self.avg_distance = 0.0
         self.max_opp_pct = 0.0
+        self.min_opp_pct = 0.0
         self.max_rep_pct = 0.0
         self.max_dem_pct = 0.0
         self.num_of_clusters = 0
@@ -64,6 +65,7 @@ class Ensemble():
             'num_of_plans': self.num_of_plans,
             'avg_distance': self.avg_distance,
             'max_opp_pct': self.max_opp_pct,
+            'min_opp_pct': self.min_opp_pct,
             'max_dem_pct': self.max_dem_pct,
             'max_rep_pct': self.max_rep_pct,
             'cluster_ids': self.cluster_ids
