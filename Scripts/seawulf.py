@@ -17,7 +17,13 @@ def main():
         mggg.run(ga, utils.HAMMING_DISTANCE, rank, 1000)
     elif rank == 52:
         mggg.run(mi, utils.HAMMING_DISTANCE, rank, 1000)
-        
+    elif rank == 60:
+        mggg.run(nv, utils.OPTIMAL_TRANSPORT, rank, 250)
+    elif rank == 61:
+        mggg.run(ga, utils.OPTIMAL_TRANSPORT, rank, 250)
+    elif rank == 62:
+        mggg.run(mi, utils.OPTIMAL_TRANSPORT, rank, 250)
+
 if __name__ == '__main__':
     if not os.path.exists(f'{utils.OUTPUT_PATH}'):
         os.mkdir(f'{utils.OUTPUT_PATH}')
