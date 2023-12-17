@@ -11,49 +11,13 @@ def main():
     mi = geopandas.read_file('michigan_data_processed.zip')
 
     rank = int(sys.argv[1])
-    if rank == 0:
-        mggg.run(nv, utils.HAMMING_DISTANCE, rank, 10000)
-    elif rank == 1:
-        mggg.run(nv, utils.HAMMING_DISTANCE, rank, 7500)
-    elif rank == 2:
-        mggg.run(nv, utils.HAMMING_DISTANCE, rank, 5000)
-    elif rank == 3:
-        mggg.run(nv, utils.HAMMING_DISTANCE, rank, 2000)
-    elif rank == 4:
-        mggg.run(nv, utils.HAMMING_DISTANCE, rank, 1000)
-    elif rank == 5:
-        mggg.run(nv, utils.HAMMING_DISTANCE, rank, 500)
-    elif rank == 6:
+    if rank == 60:
         mggg.run(nv, utils.OPTIMAL_TRANSPORT, rank, 250)
-    elif rank == 14:
-        mggg.run(ga, utils.HAMMING_DISTANCE, rank, 10000)
-    elif rank == 15:
-        mggg.run(ga, utils.HAMMING_DISTANCE, rank, 7500)
-    elif rank == 16:
-        mggg.run(ga, utils.HAMMING_DISTANCE, rank, 5000)
-    elif rank == 17:
-        mggg.run(ga, utils.HAMMING_DISTANCE, rank, 2000)
-    elif rank == 18:
-        mggg.run(ga, utils.HAMMING_DISTANCE, rank, 1000)
-    elif rank == 19:
-        mggg.run(ga, utils.HAMMING_DISTANCE, rank, 10)
-    elif rank == 20:
-        mggg.run(ga, utils.OPTIMAL_TRANSPORT, rank, 250)
-    elif rank == 7:
-        mggg.run(mi, utils.HAMMING_DISTANCE, rank, 10)
-    elif rank == 8:
-        mggg.run(mi, utils.HAMMING_DISTANCE, rank, 7500)
-    elif rank == 9:
-        mggg.run(mi, utils.HAMMING_DISTANCE, rank, 5000)
-    elif rank == 10:
-        mggg.run(mi, utils.HAMMING_DISTANCE, rank, 2000)
-    elif rank == 11:
-        mggg.run(mi, utils.HAMMING_DISTANCE, rank, 1000)
-    elif rank == 12:
-        mggg.run(mi, utils.HAMMING_DISTANCE, rank, 500)
-    elif rank == 13:
+    elif rank == 69:
+        mggg.run(nv, utils.HAMMING_DISTANCE, rank, 500)
+    elif rank == 62:
         mggg.run(mi, utils.OPTIMAL_TRANSPORT, rank, 250)
-        
+
 if __name__ == '__main__':
     if not os.path.exists(f'{utils.OUTPUT_PATH}'):
         os.mkdir(f'{utils.OUTPUT_PATH}')
