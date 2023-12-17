@@ -4,11 +4,13 @@ from gerrychain.proposals import recom
 from functools import partial
 from gerrychain.random import random
 from gerrychain.constraints import no_vanishing_districts
+from gerrychain.constraints import within_percent_of_ideal_population
 from sklearn.manifold import MDS
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
 from scipy.spatial import distance
 import concurrent.futures
+import multiprocessing as mp
 from datatypes import Plan
 from datatypes import Cluster
 from datatypes import Ensemble
@@ -38,10 +40,23 @@ def run(data, dist_measure, ensemble_number, size=1000):
 
     print("Setting Up...")
     graph = Graph.from_geodataframe(data)
-    chain = init_chain(graph)
+    ensemble = []
 
-    print("Generating Ensemble...")
-    ensemble = [generate_plan(chain, (seed * (ensemble_number + 1))) for seed in range(ENSEMBLE_SIZE)]
+    with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
+        futures = []
+
+        for seed in range(ENSEMBLE_SIZE):
+            future = executor.submit(generate_plan, init_chain(graph), seed * (ensemble_number + 1))
+            futures.append(future)
+
+        for future in concurrent.futures.as_completed(futures):
+            try:
+                result = future.result(timeout=300)
+                ensemble.append(result)
+            except concurrent.futures.TimeoutError:
+                print("Timeout occurred for generate_plan call.")
+            except Exception as e:
+                print(f"Exception occurred: {e}")
 
     print("Performing Cluster Analysis...")
     match dist_measure:
@@ -70,7 +85,7 @@ def init_chain(graph):
     initial_partition = GeographicPartition(graph, assignment='DISTRICT', updaters=my_updaters)
     ideal_population = sum(initial_partition["population"].values()) / len(initial_partition)
 
-    pop_constraint = constraints.within_percent_of_ideal_population(initial_partition, 0.10)
+    pop_constraint = within_percent_of_ideal_population(initial_partition, 0.10)
 
     proposal = partial(recom,
                     pop_col="ADJPOP",
@@ -197,7 +212,6 @@ def cluster_analysis_opt_trans(ensemble):
         for outer_idx, outer_plan in enumerate(ensemble):
             for inner_idx in range(outer_idx + 1, ENSEMBLE_SIZE):
                 futures.append(executor.submit(opt_trans, outer_idx, inner_idx, ensemble))
-
 
         concurrent.futures.wait(futures)
 
