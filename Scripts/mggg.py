@@ -44,19 +44,20 @@ def run(data, dist_measure, ensemble_number, size=1000):
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
         futures = []
-
+        
         for seed in range(ENSEMBLE_SIZE):
-            future = executor.submit(generate_plan, init_chain(graph), seed * (ensemble_number + 1))
+            future = executor.submit(generate_plan, init_chain(graph), seed * (ensemble_number + 1)) 
             futures.append(future)
 
         for future in concurrent.futures.as_completed(futures):
-            try:
-                result = future.result(timeout=300)
-                ensemble.append(result)
-            except concurrent.futures.TimeoutError:
-                print("Timeout occurred for generate_plan call.")
+            try: 
+                result = future.result()
+                ensemble.append(result)  
+            except TimeoutError:
+                print("Timeout occurred for generate_plan")
             except Exception as e:
-                print(f"Exception occurred: {e}")
+                print(f"Exception: {e}")
+
 
     print("Performing Cluster Analysis...")
     match dist_measure:
@@ -107,20 +108,22 @@ def init_chain(graph):
         ],
         accept=accept.always_accept,
         initial_state=initial_partition,
-        total_steps=2500
+        total_steps=1000
     )
 
     return chain
 
 def generate_plan(chain, seed):
     random.seed(seed)
+    
     for partition in chain.with_progress_bar():
         pass
-    
-    global PLANS
-    PLANS.append(calc_plan_stats(partition, f'{ENSEMBLE_ID}.plan_{seed}'))
 
+    global PLANS 
+    PLANS.append(calc_plan_stats(partition, f'{ENSEMBLE_ID}.plan_{seed}'))
+   
     return partition
+
 
 def calc_plan_stats(plan, plan_id):
     dem_pct = 0
