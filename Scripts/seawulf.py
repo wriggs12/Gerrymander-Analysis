@@ -12,7 +12,7 @@ def main():
 
     rank = int(sys.argv[1])
     if rank == 50:
-        mggg.run(nv, utils.HAMMING_DISTANCE, rank, 1000)
+        mggg.run(nv, utils.HAMMING_DISTANCE, rank, 500)
     elif rank == 51:
         mggg.run(ga, utils.HAMMING_DISTANCE, rank, 1000)
     elif rank == 52:
@@ -23,6 +23,10 @@ def main():
         mggg.run(ga, utils.OPTIMAL_TRANSPORT, rank, 250)
     elif rank == 62:
         mggg.run(mi, utils.OPTIMAL_TRANSPORT, rank, 250)
+    elif rank == 65:
+        mggg.run(nv, utils.HAMMING_DISTANCE, rank, 500)
+    elif rank == 66:
+        mggg.run(nv, utils.HAMMING_DISTANCE, rank, 1000)
 
 if __name__ == '__main__':
     if not os.path.exists(f'{utils.OUTPUT_PATH}'):
