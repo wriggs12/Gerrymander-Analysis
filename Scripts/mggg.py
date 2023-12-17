@@ -8,6 +8,7 @@ from sklearn.manifold import MDS
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
 from scipy.spatial import distance
+import concurrent.futures
 from datatypes import Plan
 from datatypes import Cluster
 from datatypes import Ensemble
@@ -189,15 +190,30 @@ def calc_plan_stats(plan, plan_id):
 
 def cluster_analysis_opt_trans(ensemble):
     print('Calculating Distances...')
-    distances = [[0 for i in range(ENSEMBLE_SIZE)] for j in range(ENSEMBLE_SIZE)]
+    distances = [[0 for _ in range(ENSEMBLE_SIZE)] for _ in range(ENSEMBLE_SIZE)]
+    
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        futures = []
+        for outer_idx, outer_plan in enumerate(ensemble):
+            for inner_idx in range(outer_idx + 1, ENSEMBLE_SIZE):
+                futures.append(executor.submit(opt_trans, outer_idx, inner_idx, ensemble))
 
-    for outer_idx, outer_plan in enumerate(ensemble):
+
+        concurrent.futures.wait(futures)
+
+        results = [future.result() for future in futures]
+
+    idx = 0
+    for outer_idx in range(ENSEMBLE_SIZE - 1):
         for inner_idx in range(outer_idx + 1, ENSEMBLE_SIZE):
-            inner_plan = ensemble[inner_idx]
-            distances[outer_idx][inner_idx] = ot.Pair(outer_plan, inner_plan).distance
-            distances[inner_idx][outer_idx] = distances[outer_idx][inner_idx]
+            distances[outer_idx][inner_idx] = results[idx]
+            distances[inner_idx][outer_idx] = results[idx]
+            idx += 1
 
     compute_clusters(distances, ensemble)
+
+def opt_trans(idx_1, idx_2, ensemble):
+    return ot.Pair(ensemble[idx_1], ensemble[idx_2]).distance
 
 def cluster_analysis_hamm_dist(ensemble):
     print('Calculating Distances...')
