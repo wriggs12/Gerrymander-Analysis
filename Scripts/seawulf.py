@@ -31,6 +31,8 @@ def main():
         mggg.run(nv, utils.HAMMING_DISTANCE, rank, 500)
     elif rank == 66:
         mggg.run(nv, utils.HAMMING_DISTANCE, rank, 1000)
+    elif rank == 51465:
+        mggg.run(nv, utils.HAMMING_DISTANCE, rank, 400)
 
 if __name__ == '__main__':
     if not os.path.exists(f'{utils.OUTPUT_PATH}'):

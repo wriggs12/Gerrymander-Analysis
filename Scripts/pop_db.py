@@ -2,65 +2,102 @@ import pymongo
 import geopandas
 import json
 import utils
+import matplotlib.pyplot as plt
 
 cluster = pymongo.MongoClient('mongodb+srv://winston:Ybq0Pn7jVIK1jf69@cluster0.famlsic.mongodb.net/')
-db = cluster['michigan']
-collection = db['geometries']
 
-# mi_state = geopandas.read_file(f'{utils.MICHIGAN_PATH}michigan_state.zip')
-# mi_state = mi_state.to_json()
-# mi_state = json.loads(mi_state)
+## MICHIGAN ##
+# db = cluster['michigan']
+# collection = db['geometries']
 
-# collection.insert_one({'state': mi_state})
+# mi_plan_geos = json.load(open('output/ensemble_69/plan_geo.json'))['geo_data']
+# for plan in mi_plan_geos:
+#     key = list(plan.keys())[0]
+#     gdf = geopandas.GeoDataFrame.from_features(plan[key])
+#     gdf['geometry'] = gdf['geometry'].simplify(tolerance=0.3)
+#     collection.insert_one(plan)
 
-collection = db['ensembles']
+# collection = db['ensembles']
 
-collection = db['clusters']
+# mi_ensemble = json.load(open('output/ensemble_69/ensemble.json'))
+# collection.insert_one(mi_ensemble)
 
-collection = db['plans']
+# collection = db['clusters']
+
+# mi_clusters = json.load(open('output/ensemble_69/clusters.json'))
+# for mi_cluster in mi_clusters:
+#     collection.insert_one({mi_cluster: mi_clusters[mi_cluster]})
+
+# collection = db['plans']
+
+# mi_plans = json.load(open('output/ensemble_69/plans.json'))
+# for mi_plan in mi_plans:
+#     collection.insert_one({mi_plan: mi_plans[mi_plan]})
 
 
-db = cluster['nevada']
-collection = db['geometries']
+## NEVADA ##
+# db = cluster['nevada']
+# collection = db['geometries']
 
-# nv_state = geopandas.read_file(f'{utils.NEVADA_PATH}nevada_state.zip')
-# nv_state = nv_state.to_json()
-# nv_state = json.loads(nv_state)
+# nv_plan_geos = json.load(open('output/ensemble_69/plan_geo.json'))['geo_data']
+# for plan in nv_plan_geos:
+#     key = list(plan.keys())[0]
+    
+#     gdf = geopandas.GeoDataFrame.from_features(plan[key])
+#     gdf['geometry'] = gdf['geometry'].simplify(tolerance=0.001)
 
-# collection.insert_one({'state': nv_state})
+#     data = gdf.to_json()
+#     data = json.loads(data)
 
-nv_plan_geos = json.load(open('output/ensemble_0/plan_geo.json'))['geo_data']
-for plan in nv_plan_geos:
-    collection.insert_one(plan)
+#     collection.insert_one({'properties': {'id': key, 'geometry': data}})
 
-collection = db['ensembles']
+# collection = db['ensembles']
 
-# nv_ensemble = json.load(open('output/ensemble_0/ensemble.json'))
-# collection.insert_one({'ensemble_0': nv_ensemble})
+# nv_ensemble = json.load(open('output/ensemble_65/ensemble.json'))
+# collection.insert_one(nv_ensemble)
 
-collection = db['clusters']
+# collection = db['clusters']
 
-# nv_clusters = json.load(open('output/ensemble_0/clusters.json'))
+# nv_clusters = json.load(open('output/ensemble_69/clusters.json'))
 # for nv_cluster in nv_clusters:
-    # collection.insert_one({nv_cluster: nv_clusters[nv_cluster]})
+#     collection.insert_one({'properties': nv_clusters[nv_cluster]})
 
-collection = db['plans']
+# collection = db['plans']
 
-# nv_plans = json.load(open('output/ensemble_0/plans.json'))
+# nv_plans = json.load(open('output/ensemble_69/plans.json'))
 # for nv_plan in nv_plans:
-    # collection.insert_one({nv_plan: nv_plans[nv_plan]})
+#     collection.insert_one({'properties': nv_plans[nv_plan]})
 
-db = cluster['georgia']
-collection = db['geometries']
 
-# ga_state = geopandas.read_file(f'{utils.GEORGIA_PATH}georgia_state.zip')
-# ga_state = ga_state.to_json()
-# ga_state = json.loads(ga_state)
+## GEORGIA ##
+# db = cluster['georgia']
+# collection = db['geometries']
 
-# collection.insert_one({'state': ga_state})
+# ga_plan_geos = json.load(open('output/ensemble_51/plan_geo.json'))['geo_data']
+# for plan in ga_plan_geos:
+#     key = list(plan.keys())[0]
+    
+#     gdf = geopandas.GeoDataFrame.from_features(plan[key])
+#     gdf['geometry'] = gdf['geometry'].simplify(tolerance=0.001)
 
-collection = db['ensembles']
+#     data = gdf.to_json()
+#     data = json.loads(data)
 
-collection = db['clusters']
+#     collection.insert_one({'properties': {'id': key, 'geometry': data}})
 
-collection = db['plans']
+# collection = db['ensembles']
+
+# ga_ensemble = json.load(open('output/ensemble_51/ensemble.json'))
+# collection.insert_one(ga_ensemble)
+
+# collection = db['clusters']
+
+# ga_clusters = json.load(open('output/ensemble_19/clusters.json'))
+# for ga_cluster in ga_clusters:
+#     collection.insert_one({'properties': ga_clusters[ga_cluster]})
+
+# collection = db['plans']
+
+# ga_plans = json.load(open('output/ensemble_19/plans.json'))
+# for ga_plan in ga_plans:
+#     collection.insert_one({'properties': ga_plans[ga_plan]})

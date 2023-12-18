@@ -1,1 +1,0 @@
-{"ensemble_0": {"ensemble_id": "ensemble_0", "num_of_clusters": 3, "num_of_plans": 10, "avg_distance": 0.8056576110748633, "max_opp_pct": 0.30952380952380953, "min_opp_pct": 0.21428571428571427, "max_dem_pct": 0.6666666666666666, "max_rep_pct": 0.35714285714285715, "cluster_ids": ["ensemble_0.cluster_0", "ensemble_0.cluster_1", "ensemble_0.cluster_2"]}}
