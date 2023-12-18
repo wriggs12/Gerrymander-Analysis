@@ -10,29 +10,36 @@ cluster = pymongo.MongoClient('mongodb+srv://winston:Ybq0Pn7jVIK1jf69@cluster0.f
 # db = cluster['michigan']
 # collection = db['geometries']
 
-# mi_plan_geos = json.load(open('output/ensemble_69/plan_geo.json'))['geo_data']
+# mi_plan_geos = json.load(open('output/ensemble_70/plan_geo.json'))['geo_data']
 # for plan in mi_plan_geos:
 #     key = list(plan.keys())[0]
+    
 #     gdf = geopandas.GeoDataFrame.from_features(plan[key])
-#     gdf['geometry'] = gdf['geometry'].simplify(tolerance=0.3)
-#     collection.insert_one(plan)
+#     gdf['geometry'] = gdf['geometry'].simplify(tolerance=0.001)
+
+#     gdf.plot()
+#     plt.show()
+#     data = gdf.to_json()
+#     data = json.loads(data)
+
+#     collection.insert_one({'properties': {'id': key, 'geometry': data}})
 
 # collection = db['ensembles']
 
-# mi_ensemble = json.load(open('output/ensemble_69/ensemble.json'))
+# mi_ensemble = json.load(open('output/ensemble_70/ensemble.json'))
 # collection.insert_one(mi_ensemble)
 
 # collection = db['clusters']
 
-# mi_clusters = json.load(open('output/ensemble_69/clusters.json'))
+# mi_clusters = json.load(open('output/ensemble_70/clusters.json'))
 # for mi_cluster in mi_clusters:
-#     collection.insert_one({mi_cluster: mi_clusters[mi_cluster]})
+#     collection.insert_one({'properties': mi_clusters[mi_cluster]})
 
 # collection = db['plans']
 
-# mi_plans = json.load(open('output/ensemble_69/plans.json'))
+# mi_plans = json.load(open('output/ensemble_70/plans.json'))
 # for mi_plan in mi_plans:
-#     collection.insert_one({mi_plan: mi_plans[mi_plan]})
+#     collection.insert_one({'properties': mi_plans[mi_plan]})
 
 
 ## NEVADA ##
