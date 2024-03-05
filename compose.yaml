@@ -1,0 +1,7 @@
+services:
+  gerryproject:
+    build: .
+    image: gerryproject
+    volumes:
+      - ./:/workdir
+  

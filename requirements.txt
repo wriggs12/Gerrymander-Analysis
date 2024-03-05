@@ -1,0 +1,5 @@
+geopandas
+gerrychain
+scikit-learn
+cvxpy
+tqdm
